@@ -99,6 +99,8 @@ fun GatewayDashboard(
     chatPanel: @Composable () -> Unit,
 ) {
     val connected = state.phase == Session.Phase.CONNECTED
+    val ownNickname = state.client(state.ownId)?.nickname.orEmpty()
+    val ownRegion = DgRegions.regionOf(ownNickname)
     val pttMode = state.voice.activation == VoiceSettings.Activation.PTT
     val keyboardOpen = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     var showUsers by remember { mutableStateOf(false) }
@@ -177,7 +179,7 @@ fun GatewayDashboard(
                     Icon(Icons.Filled.Headset, contentDescription = null, tint = CyanGlow, modifier = Modifier.size(22.dp))
                     Spacer(Modifier.width(9.dp))
                     Text(
-                        "COMMUNICATION NETWORK", color = LightText, fontWeight = FontWeight.Bold,
+                        "DG REGIO NETWERK", color = LightText, fontWeight = FontWeight.Bold,
                         fontSize = if (narrowScreen) 13.sp else 15.sp,
                         maxLines = 1, overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
@@ -185,9 +187,10 @@ fun GatewayDashboard(
                     Text(if (connected) "●" else "○", color = if (connected) Color(0xFF28FF63) else AmberGlow, fontSize = 17.sp)
                 }
                 Box(Modifier.fillMaxWidth().height(1.dp).background(CyanGlow.copy(alpha = 0.75f)))
-                if (state.serverName.isNotBlank()) {
+                if (ownNickname.isNotBlank()) {
                     Text(
-                        state.serverName, color = CyanGlow.copy(alpha = 0.9f), fontSize = 11.sp,
+                        "${ownRegion?.fullLabel ?: "DG-999 · Overige"}  ·  $ownNickname",
+                        color = CyanGlow.copy(alpha = 0.9f), fontSize = 11.sp,
                         maxLines = 1, overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 5.dp),
                     )
