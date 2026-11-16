@@ -33,7 +33,7 @@ jobs:
       - name: Package corresponding GPL source
         run: |
           mkdir -p dist
-          tar --exclude=.git -czf dist/DMR-Gateway-Pro-1.0.0-source.tar.gz -C upstream .
+          tar --exclude=.git -czf dist/DMR-Gateway-Pro-1.1.0-source.tar.gz -C upstream .
 
       - name: Prepare Android build environment
         run: |
@@ -50,16 +50,16 @@ jobs:
             -e POCKETTS_BUILD_ROOT=/out \
             dmr-gateway-builder \
             ./gradlew --no-daemon --console=plain :app:assembleDebug
-          cp out/app/outputs/apk/debug/app-debug.apk dist/DMR-Gateway-Pro-1.0.0-debug.apk
-          test -s dist/DMR-Gateway-Pro-1.0.0-debug.apk
-          sha256sum dist/DMR-Gateway-Pro-1.0.0-debug.apk | tee dist/SHA256SUMS.txt
+          cp out/app/outputs/apk/debug/app-debug.apk dist/DMR-Gateway-Pro-1.1.0-debug.apk
+          test -s dist/DMR-Gateway-Pro-1.1.0-debug.apk
+          sha256sum dist/DMR-Gateway-Pro-1.1.0-debug.apk | tee dist/SHA256SUMS.txt
 
       - name: Upload APK for Android
         uses: actions/upload-artifact@v4
         with:
           name: DMR-Gateway-Pro-debug-apk
           path: |
-            dist/DMR-Gateway-Pro-1.0.0-debug.apk
+            dist/DMR-Gateway-Pro-1.1.0-debug.apk
             dist/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 90
@@ -68,6 +68,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: DMR-Gateway-Pro-source
-          path: dist/DMR-Gateway-Pro-1.0.0-source.tar.gz
+          path: dist/DMR-Gateway-Pro-1.1.0-source.tar.gz
           if-no-files-found: error
           retention-days: 90
