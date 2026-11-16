@@ -6,10 +6,12 @@ Dit project is een gewijzigde versie van [PocketTS 1.7.0](https://github.com/Kor
 
 > DMR Gateway Pro is de **appnaam**; de huidige app maakt via TeamSpeak verbinding. Dit voegt niet automatisch een DMR-naar-TeamSpeak-radio-gateway toe. De app is niet verbonden aan de makers van TeamSpeak.
 
-## Wat zit er in versie 1.0.0?
+## Wat zit er in versie 1.1.0?
 
 - **Nieuw uiterlijk:** donkerblauw, elektrische blauwe omlijning, oranje Kanalen-tab en contrastvolle gebruikerslijst.
-- **Zeer grote PTT-knop**, onderaan in het midden, met echte TeamSpeak-zendfunctie: indrukken = zenden, loslaten = stoppen. Oranje wanneer je zendt.
+- **Zeer grote PTT-knop**, onderaan in het midden, met echte TeamSpeak-zendfunctie: indrukken = zenden, loslaten = stoppen. Groen tijdens standby, rood tijdens zenden, met een dubbele zilverkleurige metalen ring.
+- **Zilvermetalen randen** rond het volledige kanalen-/chatscherm, geïnspireerd op het aangeleverde ontwerp.
+- **Gebruikersknop:** popup met uitsluitend de namen van alle online TeamSpeak-gebruikers uit alle kanalen, automatisch bijgewerkt.
 - **PTT standaard ingeschakeld** bij een nieuwe installatie. De gebruiker kan spraakactivatie altijd aanpassen via Instellingen.
 - Alle serverkanalen, gebruikers, chat, favorieten, gebruikersopties en server-instellingen worden uit de originele PocketTS-broncode geladen.
 - Microfoon, geluid, audioverwerking, verbindingsdienst en protocolmodule blijven uit de geteste upstreambron.
@@ -19,7 +21,7 @@ Dit project is een gewijzigde versie van [PocketTS 1.7.0](https://github.com/Kor
 
 ## APK downloaden
 
-Ga naar de GitHub-repository, open **Actions → Android APK → meest recente geslaagde run → Artifacts** en download **DMR-Gateway-Pro-debug-apk**. Pak het ZIP-bestand uit; daarin staat **DMR-Gateway-Pro-1.0.0-debug.apk**.
+Ga naar de GitHub-repository, open **Actions → Android APK → meest recente geslaagde run → Artifacts** en download **DMR-Gateway-Pro-debug-apk**. Pak het ZIP-bestand uit; daarin staat **DMR-Gateway-Pro-1.1.0-debug.apk**.
 
 Bij een eerste installatie kan Android vragen om toestemming voor installeren vanuit de browser of bestandsbeheerder. Gebruik minimaal Android 10.
 
