@@ -86,6 +86,7 @@ fun GatewayDashboard(
             .padding(horizontal = 10.dp, vertical = 7.dp),
     ) {
         val compact = maxHeight < 705.dp
+        val narrowScreen = maxWidth < 365.dp
         val buttonSize = when {
             maxHeight < 545.dp -> 108.dp
             maxHeight < 645.dp -> 132.dp
@@ -141,7 +142,7 @@ fun GatewayDashboard(
                     Spacer(Modifier.width(9.dp))
                     Text(
                         "COMMUNICATION NETWORK", color = LightText, fontWeight = FontWeight.Bold,
-                        fontSize = if (maxWidth < 365.dp) 13.sp else 15.sp,
+                        fontSize = if (narrowScreen) 13.sp else 15.sp,
                         maxLines = 1, overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
