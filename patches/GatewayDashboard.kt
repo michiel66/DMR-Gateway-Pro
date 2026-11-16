@@ -13,10 +13,13 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -28,7 +31,9 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.ScreenShare
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.korppujauho.pocketts.Session
 import io.github.korppujauho.pocketts.VoiceSettings
+import io.github.korppujauho.pocketts.proto.ServerModel
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.delay
@@ -65,6 +71,22 @@ private val AmberGlow = Color(0xFFFF9100)
 private val DarkBlue = Color(0xFF05101F)
 private val DeepPanel = Color(0xFF07182C)
 private val LightText = Color(0xFFE4F4FF)
+private val StandbyGreen = Color(0xFF26F16A)
+private val TransmitRed = Color(0xFFFF3542)
+// Metallic frame in the reference: a cool bright edge with darker brushed-steel reflections.
+private val SteelEdge = Brush.linearGradient(
+    listOf(
+        Color(0xFF66788B), Color(0xFFF8FBFF), Color(0xFF7C93A7),
+        Color(0xFF344557), Color(0xFFE2EDF5), Color(0xFF62788C),
+    ),
+)
+private val SteelRing = Brush.sweepGradient(
+    listOf(
+        Color(0xFF344658), Color(0xFFF6FAFF), Color(0xFF7B8B9C),
+        Color(0xFF27384B), Color(0xFFE8F0F7), Color(0xFF47596D),
+        Color(0xFF344658),
+    ),
+)
 
 @Composable
 fun GatewayDashboard(
@@ -79,6 +101,16 @@ fun GatewayDashboard(
     val connected = state.phase == Session.Phase.CONNECTED
     val pttMode = state.voice.activation == VoiceSettings.Activation.PTT
     val keyboardOpen = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+    var showUsers by remember { mutableStateOf(false) }
+    // Every visible connected client across the server's entire channel tree.
+    // Exclude server-query identities just like PocketTS's channel listing does.
+    val onlineUsers = remember(state.tree) {
+        flattenTree(state.tree)
+            .flatMap { it.node.clients }
+            .filter { it.type != 1 && it.nickname.isNotBlank() }
+            .distinctBy { it.id }
+            .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.nickname })
+    }
 
     BoxWithConstraints(
         Modifier.fillMaxSize()
@@ -111,7 +143,7 @@ fun GatewayDashboard(
                     "Geluid", alert = state.outputMuted, onClick = actions::toggleSound,
                 )
                 GatewayQuickButton(Icons.Filled.ScreenShare, "Scherm delen", onClick = onShare)
-                GatewayQuickButton(Icons.Filled.People, "Gebruikers", onClick = { onView(View.CHANNELS) })
+                GatewayQuickButton(Icons.Filled.People, "Gebruikers", onClick = { showUsers = true })
                 GatewayQuickButton(Icons.Filled.ChatBubble, "Chat", onClick = { onView(View.CHAT) })
             }
 
@@ -127,10 +159,14 @@ fun GatewayDashboard(
 
             Column(
                 Modifier.fillMaxWidth().weight(1f)
-                    .shadow(7.dp, RoundedCornerShape(19.dp), ambientColor = ElectricBlue.copy(alpha = 0.3f))
-                    .clip(RoundedCornerShape(19.dp))
+                    .shadow(13.dp, RoundedCornerShape(23.dp), ambientColor = Color(0xFF94AABD).copy(alpha = 0.30f))
+                    .clip(RoundedCornerShape(23.dp))
+                    .background(SteelEdge)
+                    .border(1.dp, Color(0xFFD8E6EF), RoundedCornerShape(23.dp))
+                    .padding(5.dp) // brushed steel bezel wraps the complete screen
+                    .clip(RoundedCornerShape(18.dp))
                     .background(Brush.verticalGradient(listOf(Color(0xFF071C32), Color(0xFF03101F))))
-                    .border(1.5.dp, ElectricBlue, RoundedCornerShape(19.dp)),
+                    .border(1.5.dp, ElectricBlue, RoundedCornerShape(18.dp)),
             ) {
                 Row(
                     Modifier.fillMaxWidth().height(49.dp)
@@ -167,7 +203,7 @@ fun GatewayDashboard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    GatewaySideButton(Icons.Filled.People, "Gebruikers", Modifier.weight(1f)) { onView(View.CHANNELS) }
+                    GatewaySideButton(Icons.Filled.People, "Gebruikers", Modifier.weight(1f)) { showUsers = true }
                     Spacer(Modifier.width(8.dp))
                     GatewayPttButton(
                         size = buttonSize,
@@ -184,6 +220,9 @@ fun GatewayDashboard(
                 GatewayStatusBar(connected, state.pttHeld, pttMode, Modifier.fillMaxWidth().height(38.dp))
             }
         }
+    }
+    if (showUsers) {
+        OnlineUsersPopup(onlineUsers, onClose = { showUsers = false })
     }
 }
 
@@ -237,28 +276,78 @@ private fun GatewaySideButton(icon: ImageVector, title: String, modifier: Modifi
 
 @Composable
 private fun GatewayPttButton(size: androidx.compose.ui.unit.Dp, held: Boolean, enabled: Boolean, onHold: (Boolean) -> Unit) {
-    val ring = if (held) AmberGlow else ElectricBlue
+    val signal = if (held) TransmitRed else StandbyGreen
     val label = if (held) "ZENDEN" else if (enabled) "PTT — ingedrukt houden" else "PTT — kies PTT in instellingen"
     val gesture = if (enabled) Modifier.holdToTalk(held, label, onHold = onHold) else Modifier
-    Column(
+    Box(
         Modifier.size(size)
-            .shadow(16.dp, CircleShape, ambientColor = ring.copy(alpha = 0.7f), spotColor = ring.copy(alpha = 0.7f))
+            .shadow(18.dp, CircleShape, ambientColor = signal.copy(alpha = 0.60f), spotColor = signal.copy(alpha = 0.55f))
             .clip(CircleShape)
-            .background(
-                Brush.radialGradient(
-                    if (held) listOf(Color(0xFFFFAA3A), Color(0xFFB62B00), Color(0xFF260700))
-                    else listOf(Color(0xFF007DCE), Color(0xFF002F83), Color(0xFF010A23)),
-                ),
-            )
-            .border(5.dp, ring, CircleShape)
-            .then(gesture),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+            .background(SteelRing)
+            .border(1.5.dp, Color(0xFFF2F7FB), CircleShape)
+            .then(gesture)  // the entire steel-framed circle is press-to-talk
+            .padding(9.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        Icon(Icons.Filled.Mic, contentDescription = null, tint = Color.White, modifier = Modifier.size(size * 0.27f))
-        Text("PTT", color = Color.White, fontWeight = FontWeight.Black, fontSize = (size.value * 0.25f).sp)
-        if (!enabled) Text("INSTELLEN", color = Color(0xFFFFD08A), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+        Column(
+            Modifier.fillMaxSize()
+                .clip(CircleShape)
+                .background(
+                    Brush.radialGradient(
+                        if (held)
+                            listOf(Color(0xFFFF636A), Color(0xFFDA172A), Color(0xFF530614))
+                        else
+                            listOf(Color(0xFF31F77D), Color(0xFF008D38), Color(0xFF003417)),
+                    ),
+                )
+                .border(3.dp, signal, CircleShape),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Icon(Icons.Filled.Mic, contentDescription = null, tint = Color.White, modifier = Modifier.size(size * 0.27f))
+            Text("PTT", color = Color.White, fontWeight = FontWeight.Black, fontSize = (size.value * 0.25f).sp)
+            if (!enabled) Text("INSTELLEN", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+        }
     }
+}
+
+/** Names only, for ALL channels. The list refreshes as PocketTS receives server updates. */
+@Composable
+private fun OnlineUsersPopup(users: List<ServerModel.Client>, onClose: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onClose,
+        title = {
+            Text("Online gebruikers (${users.size})", color = LightText, fontWeight = FontWeight.Bold)
+        },
+        text = {
+            if (users.isEmpty()) {
+                Text("Geen gebruikers online", color = LightText)
+            } else {
+                LazyColumn(
+                    Modifier.fillMaxWidth().heightIn(max = 395.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    items(users, key = { it.id }) { person ->
+                        Text(
+                            person.nickname,
+                            color = LightText,
+                            fontSize = 16.sp,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 5.dp, vertical = 10.dp),
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onClose) {
+                Text("Sluiten", color = Color(0xFFBDD4E5), fontWeight = FontWeight.Bold)
+            }
+        },
+        containerColor = Color(0xFF07182C),
+        shape = RoundedCornerShape(19.dp),
+    )
 }
 
 @Composable
