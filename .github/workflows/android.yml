@@ -1,0 +1,73 @@
+name: Android APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Checkout DMR Gateway Pro customizations
+        uses: actions/checkout@v4
+
+      - name: Fetch fixed PocketTS 1.7.0 source
+        run: |
+          git clone --depth 1 --branch v1.7.0 https://github.com/KorppuJauho/pocketts.git upstream
+          test -f upstream/app/src/main/kotlin/io/github/korppujauho/pocketts/ui/ServerScreen.kt
+
+      - name: Apply app name, PTT dashboard and visual theme
+        run: |
+          python3 -m py_compile scripts/apply_branding.py
+          python3 scripts/apply_branding.py upstream
+          grep -q 'applicationId = "nl.dmr.gateway.pro"' upstream/app/build.gradle.kts
+          grep -q "DMR Gateway Pro" upstream/app/src/main/res/values/strings.xml
+          grep -q "GatewayDashboard(" upstream/app/src/main/kotlin/io/github/korppujauho/pocketts/ui/ServerScreen.kt
+
+      - name: Package corresponding GPL source
+        run: |
+          mkdir -p dist
+          tar --exclude=.git -czf dist/DMR-Gateway-Pro-1.0.0-source.tar.gz -C upstream .
+
+      - name: Prepare Android build environment
+        run: |
+          docker build -f upstream/docker/build.Dockerfile \
+            --build-arg ACCEPT_ANDROID_SDK_LICENSE=yes \
+            -t dmr-gateway-builder upstream/docker
+
+      - name: Build installable Android APK
+        run: |
+          mkdir -p out
+          docker run --rm \
+            -v "$PWD/upstream":/work \
+            -v "$PWD/out":/out \
+            -e POCKETTS_BUILD_ROOT=/out \
+            dmr-gateway-builder \
+            ./gradlew --no-daemon --console=plain :app:assembleDebug
+          cp out/app/outputs/apk/debug/app-debug.apk dist/DMR-Gateway-Pro-1.0.0-debug.apk
+          test -s dist/DMR-Gateway-Pro-1.0.0-debug.apk
+          sha256sum dist/DMR-Gateway-Pro-1.0.0-debug.apk | tee dist/SHA256SUMS.txt
+
+      - name: Upload APK for Android
+        uses: actions/upload-artifact@v4
+        with:
+          name: DMR-Gateway-Pro-debug-apk
+          path: |
+            dist/DMR-Gateway-Pro-1.0.0-debug.apk
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload complete corresponding source
+        uses: actions/upload-artifact@v4
+        with:
+          name: DMR-Gateway-Pro-source
+          path: dist/DMR-Gateway-Pro-1.0.0-source.tar.gz
+          if-no-files-found: error
+          retention-days: 90
