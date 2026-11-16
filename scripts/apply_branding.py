@@ -31,7 +31,7 @@ replace_once(gradle, 'applicationId = "io.github.korppujauho.pocketts"', 'applic
 replace_once(gradle, 'versionCode = 8', 'versionCode = 1')
 replace_once(gradle, 'versionName = "1.7.0"', 'versionName = "1.0.0"')
 replace_once(gradle, 'manifestPlaceholders["appLabel"] = "PocketTS"', 'manifestPlaceholders["appLabel"] = "DMR Gateway Pro"')
-replace_once(gradle, 'manifestPlaceholders["appLabel"] = "PocketTStest"', 'manifestPlaceholders["appLabel"] = "DMR Gateway Pro Test"')
+replace_once(gradle, 'manifestPlaceholders["appLabel"] = "PocketTStest"', 'manifestPlaceholders["appLabel"] = "DMR Gateway Pro"')
 replace_once(gradle, 'manifestPlaceholders["appLabel"] = "PocketTSshrunk"', 'manifestPlaceholders["appLabel"] = "DMR Gateway Pro Shrunk"')
 replace_once(gradle, 'buildConfigField("boolean", "UPDATE_CHECK", "true")', 'buildConfigField("boolean", "UPDATE_CHECK", "false")')
 
