@@ -28,8 +28,8 @@ def replace_once(path: str, old: str, new: str) -> None:
 
 gradle = "app/build.gradle.kts"
 replace_once(gradle, 'applicationId = "io.github.korppujauho.pocketts"', 'applicationId = "nl.dmr.gateway.pro"')
-replace_once(gradle, 'versionCode = 8', 'versionCode = 1')
-replace_once(gradle, 'versionName = "1.7.0"', 'versionName = "1.0.0"')
+replace_once(gradle, 'versionCode = 8', 'versionCode = 2')
+replace_once(gradle, 'versionName = "1.7.0"', 'versionName = "1.1.0"')
 replace_once(gradle, 'manifestPlaceholders["appLabel"] = "PocketTS"', 'manifestPlaceholders["appLabel"] = "DMR Gateway Pro"')
 replace_once(gradle, 'manifestPlaceholders["appLabel"] = "PocketTStest"', 'manifestPlaceholders["appLabel"] = "DMR Gateway Pro"')
 replace_once(gradle, 'manifestPlaceholders["appLabel"] = "PocketTSshrunk"', 'manifestPlaceholders["appLabel"] = "DMR Gateway Pro Shrunk"')
