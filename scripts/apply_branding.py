@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Apply DMR Gateway Pro branding to a CLEAN PocketTS v1.7.0 source tree.
+"""Apply DG Gateway Pro branding to a CLEAN PocketTS v1.7.0 source tree.
 
 The upstream Kotlin audio engine and TeamSpeak protocol source are NOT patched.
-All changes are presentation, app identification and the default PTT preference.
+Changes include a fixed Heerlen connection screen, region labels, branding and the default PTT preference.
 Based on PocketTS (KorppuJauho), licensed under GPL-3.0; 2026-11-16.
 """
 from pathlib import Path
@@ -27,17 +27,17 @@ def replace_once(path: str, old: str, new: str) -> None:
 
 
 gradle = "app/build.gradle.kts"
-replace_once(gradle, 'applicationId = "io.github.korppujauho.pocketts"', 'applicationId = "nl.dmr.gateway.pro"')
-replace_once(gradle, 'versionCode = 8', 'versionCode = 2')
-replace_once(gradle, 'versionName = "1.7.0"', 'versionName = "1.1.0"')
-replace_once(gradle, 'manifestPlaceholders["appLabel"] = "PocketTS"', 'manifestPlaceholders["appLabel"] = "DMR Gateway Pro"')
-replace_once(gradle, 'manifestPlaceholders["appLabel"] = "PocketTStest"', 'manifestPlaceholders["appLabel"] = "DMR Gateway Pro"')
-replace_once(gradle, 'manifestPlaceholders["appLabel"] = "PocketTSshrunk"', 'manifestPlaceholders["appLabel"] = "DMR Gateway Pro Shrunk"')
+replace_once(gradle, 'applicationId = "io.github.korppujauho.pocketts"', 'applicationId = "nl.dg.gateway.pro"')
+replace_once(gradle, 'versionCode = 8', 'versionCode = 3')
+replace_once(gradle, 'versionName = "1.7.0"', 'versionName = "2.0.0"')
+replace_once(gradle, 'manifestPlaceholders["appLabel"] = "PocketTS"', 'manifestPlaceholders["appLabel"] = "DG Gateway Pro"')
+replace_once(gradle, 'manifestPlaceholders["appLabel"] = "PocketTStest"', 'manifestPlaceholders["appLabel"] = "DG Gateway Pro"')
+replace_once(gradle, 'manifestPlaceholders["appLabel"] = "PocketTSshrunk"', 'manifestPlaceholders["appLabel"] = "DG Gateway Pro Shrunk"')
 replace_once(gradle, 'buildConfigField("boolean", "UPDATE_CHECK", "true")', 'buildConfigField("boolean", "UPDATE_CHECK", "false")')
 
 replace_once("app/src/main/res/values/strings.xml",
              '<string name="app_name" translatable="false">PocketTS</string>',
-             '<string name="app_name" translatable="false">DMR Gateway Pro</string>')
+             '<string name="app_name" translatable="false">DG Gateway Pro</string>')
 
 # PTT is the default only for this new package; any user-selected voice activation is still respected.
 replace_once("app/src/main/kotlin/io/github/korppujauho/pocketts/VoiceSettings.kt",
@@ -171,6 +171,79 @@ icon = r'''<?xml version="1.0" encoding="utf-8"?>
 '''
 icon_path = root / "app/src/main/res/drawable/ic_launcher_foreground.xml"
 icon_path.write_text(icon, encoding="utf-8")
+
+# DG Gateway Pro: fixed-server connection screen and Dutch province-to-DG labels.
+# The only selectable server address is built into the application and not shown in the UI.
+main = "app/src/main/kotlin/io/github/korppujauho/pocketts/MainActivity.kt"
+replace_once(
+    main,
+    "        Connect(state, favs)",
+    """        io.github.korppujauho.pocketts.ui.DgConnectScreen(
+            error = state.error,
+            onConnect = { dgNickname ->
+                connect(ctx, io.github.korppujauho.pocketts.ui.DgRegions.SERVER, dgNickname, "")
+            },
+            onDismissError = Session::clearError,
+        )""",
+)
+replace_once(
+    main,
+    "favorites.value.firstOrNull { it.auto }?.let { connectFavorite(applicationContext, it) }",
+    "// The fixed DG network must never auto-connect to unrelated servers.",
+)
+# Reject external teamspeak:// invitations. Other upstream link handlers remain unreachable.
+p_main = root / main
+activity = p_main.read_text(encoding="utf-8")
+link_start = activity.find("    private fun openLink(intent: Intent?): Boolean {")
+link_end = activity.find("\n    override fun onStart() {", link_start)
+if link_start < 0 or link_end < 0:
+    raise RuntimeError("PocketTS external-link anchors changed; refusing insecure patch.")
+activity = activity[:link_start] + "    private fun openLink(intent: Intent?): Boolean = false // Fixed-server edition\n" + activity[link_end:]
+p_main.write_text(activity, encoding="utf-8")
+
+# Keep DG prefix even if a user edits their nickname via the original audio/settings panel.
+replace_once(
+    main,
+    """        if (nickname.isNotEmpty() && nickname != Settings(context).nickname) {
+            Settings(context).nickname = nickname
+            Session.setNickname(nickname)
+        }""",
+    """        if (nickname.isNotEmpty() && nickname != Settings(context).nickname) {
+            val prefs = context.getSharedPreferences("dg_profile", Context.MODE_PRIVATE)
+            val region = io.github.korppujauho.pocketts.ui.DgRegions.byCode(prefs.getInt("region_code", 0))
+            val cleanName = if (nickname.startsWith("DG-", ignoreCase = true))
+                nickname.substringAfter(' ', "").trim().take(22) else nickname.trim().take(22)
+            if (region != null && cleanName.isNotEmpty()) {
+                val newNickname = io.github.korppujauho.pocketts.ui.DgRegions.nickname(region, cleanName)
+                prefs.edit().putString("display_name", cleanName).apply()
+                Settings(context).nickname = newNickname
+                Session.setNickname(newNickname)
+            }
+        }""",
+)
+
+# Remove the old favourite server switcher: it would permit connecting elsewhere.
+p_server = root / server
+server_text = p_server.read_text(encoding="utf-8")
+header_start = server_text.find("            AppHeader {\n")
+header_end_tag = "                SettingsGear { settings = 0 }\n            }"
+header_end = server_text.find(header_end_tag, header_start)
+if header_start < 0 or header_end < 0:
+    raise RuntimeError("PocketTS header anchors changed; cannot remove server switcher.")
+server_text = server_text[:header_start] + """            AppHeader {
+                HeaderButton(androidx.compose.material.icons.Icons.AutoMirrored.Filled.Logout,
+                    stringResource(R.string.disconnect), tint = Ts.red) { actions.disconnect() }
+                SettingsGear { settings = 0 }
+            }""" + server_text[header_end + len(header_end_tag):]
+p_server.write_text(server_text, encoding="utf-8")
+
+# Complete DG region mapping and saved-profile login are native Compose UI.
+for dg_file in ("DgRegions.kt", "DgConnectScreen.kt"):
+    shutil.copyfile(
+        overlay / "patches" / dg_file,
+        root / "app/src/main/kotlin/io/github/korppujauho/pocketts/ui" / dg_file,
+    )
+
 # Leave the manifest, audio service, protocol and codec implementations unchanged.
-print("Applied DMR Gateway Pro branding and neon dashboard to PocketTS v1.7.0.")
+print("Applied DG Gateway Pro branding and neon dashboard to PocketTS v1.7.0.")
 print("Original TeamSpeak protocol and microphone/audio engine are unchanged.")
