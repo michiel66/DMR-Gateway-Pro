@@ -32,11 +32,15 @@ jobs:
           grep -q 'DgConnectScreen(' upstream/app/src/main/kotlin/io/github/korppujauho/pocketts/MainActivity.kt
           grep -q 'heerlen.mijnts3.nl' upstream/app/src/main/kotlin/io/github/korppujauho/pocketts/ui/DgRegions.kt
           test -f upstream/app/src/main/kotlin/io/github/korppujauho/pocketts/ui/DgConnectScreen.kt
+          # Regression guard: unchanged upstream source for audio RX/TX and test playback.
+          git -C upstream diff --exit-code --             app/src/main/kotlin/io/github/korppujauho/pocketts/Session.kt             app/src/main/kotlin/io/github/korppujauho/pocketts/VoicePlayer.kt             app/src/main/kotlin/io/github/korppujauho/pocketts/AudioRoute.kt             app/src/main/kotlin/io/github/korppujauho/pocketts/TestSound.kt
+          grep -Fq 'val echoCancellation: Boolean = true,' upstream/app/src/main/kotlin/io/github/korppujauho/pocketts/VoiceSettings.kt
+          grep -Fq 'val useHeadset: Boolean = true,' upstream/app/src/main/kotlin/io/github/korppujauho/pocketts/VoiceSettings.kt
 
       - name: Package corresponding GPL source
         run: |
           mkdir -p dist
-          tar --exclude=.git -czf dist/DG-Gateway-Pro-2.0.1-source.tar.gz -C upstream .
+          tar --exclude=.git -czf dist/DG-Gateway-Pro-2.0.2-source.tar.gz -C upstream .
 
       - name: Prepare Android build environment
         run: |
@@ -53,16 +57,16 @@ jobs:
             -e POCKETTS_BUILD_ROOT=/out \
             dg-gateway-builder \
             ./gradlew --no-daemon --console=plain :app:assembleDebug
-          cp out/app/outputs/apk/debug/app-debug.apk dist/DG-Gateway-Pro-2.0.1-debug.apk
-          test -s dist/DG-Gateway-Pro-2.0.1-debug.apk
-          sha256sum dist/DG-Gateway-Pro-2.0.1-debug.apk | tee dist/SHA256SUMS.txt
+          cp out/app/outputs/apk/debug/app-debug.apk dist/DG-Gateway-Pro-2.0.2-debug.apk
+          test -s dist/DG-Gateway-Pro-2.0.2-debug.apk
+          sha256sum dist/DG-Gateway-Pro-2.0.2-debug.apk | tee dist/SHA256SUMS.txt
 
       - name: Upload APK for Android
         uses: actions/upload-artifact@v4
         with:
           name: DG-Gateway-Pro-debug-apk
           path: |
-            dist/DG-Gateway-Pro-2.0.1-debug.apk
+            dist/DG-Gateway-Pro-2.0.2-debug.apk
             dist/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 90
@@ -71,6 +75,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: DG-Gateway-Pro-source
-          path: dist/DG-Gateway-Pro-2.0.1-source.tar.gz
+          path: dist/DG-Gateway-Pro-2.0.2-source.tar.gz
           if-no-files-found: error
           retention-days: 90
