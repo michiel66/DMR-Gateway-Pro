@@ -28,8 +28,8 @@ def replace_once(path: str, old: str, new: str) -> None:
 
 gradle = "app/build.gradle.kts"
 replace_once(gradle, 'applicationId = "io.github.korppujauho.pocketts"', 'applicationId = "nl.dg.gateway.pro"')
-replace_once(gradle, 'versionCode = 8', 'versionCode = 3')
-replace_once(gradle, 'versionName = "1.7.0"', 'versionName = "2.0.0"')
+replace_once(gradle, 'versionCode = 8', 'versionCode = 4')
+replace_once(gradle, 'versionName = "1.7.0"', 'versionName = "2.0.1"')
 replace_once(gradle, 'manifestPlaceholders["appLabel"] = "PocketTS"', 'manifestPlaceholders["appLabel"] = "DG Gateway Pro"')
 replace_once(gradle, 'manifestPlaceholders["appLabel"] = "PocketTStest"', 'manifestPlaceholders["appLabel"] = "DG Gateway Pro"')
 replace_once(gradle, 'manifestPlaceholders["appLabel"] = "PocketTSshrunk"', 'manifestPlaceholders["appLabel"] = "DG Gateway Pro Shrunk"')
@@ -42,6 +42,30 @@ replace_once("app/src/main/res/values/strings.xml",
 # PTT is the default only for this new package; any user-selected voice activation is still respected.
 replace_once("app/src/main/kotlin/io/github/korppujauho/pocketts/VoiceSettings.kt",
              'val activation: Activation = Activation.VAD,', 'val activation: Activation = Activation.PTT,')
+# Reliable Android receive audio by default: media playback to the built-in loudspeaker,
+# not USAGE_VOICE_COMMUNICATION, which is sometimes routed to the quiet earpiece on Samsung.
+# The outgoing MicSender/TeamSpeak voice transport are unchanged; the user's route
+# preferences still work and the dashboard offers an explicit "Audio herstellen" fallback.
+replace_once("app/src/main/kotlin/io/github/korppujauho/pocketts/VoiceSettings.kt",
+             'val echoCancellation: Boolean = true,', 'val echoCancellation: Boolean = false,')
+replace_once("app/src/main/kotlin/io/github/korppujauho/pocketts/VoiceSettings.kt",
+             'val useHeadset: Boolean = true,', 'val useHeadset: Boolean = false,')
+
+# The built-in two-tone test must follow the same device route as the actual receive player.
+replace_once(
+    "app/src/main/kotlin/io/github/korppujauho/pocketts/TestSound.kt",
+    """            try {
+                track.write(pcm, 0, pcm.size)""",
+    """            if (!v.callAudio && !v.useHeadset) {
+                val audio = MainActivity.current?.getSystemService(android.media.AudioManager::class.java)
+                val speaker = audio?.getDevices(android.media.AudioManager.GET_DEVICES_OUTPUTS)
+                    ?.firstOrNull { it.type == android.media.AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
+                if (speaker != null) track.setPreferredDevice(speaker)
+            }
+            try {
+                track.write(pcm, 0, pcm.size)""",
+)
+
 # The large dashboard PTT replaces the original small floating overlay in this branding.
 replace_once("app/src/main/kotlin/io/github/korppujauho/pocketts/VoiceSettings.kt",
              'val floatingPtt: Boolean = true,', 'val floatingPtt: Boolean = false,')
