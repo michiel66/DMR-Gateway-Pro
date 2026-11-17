@@ -39,6 +39,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -108,6 +109,9 @@ fun GatewayDashboard(
     val keyboardOpen = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     var showUsers by remember { mutableStateOf(false) }
     var showAudio by remember { mutableStateOf(false) }
+    // Actual PocketTS receive decoder's talking state; not a visual simulation.
+    val packetVoice by Session.voices.collectAsState()
+    val incomingVoiceActive = packetVoice.talking.any { it != state.ownId }
     // Every visible connected client across the server's entire channel tree.
     // Exclude server-query identities just like PocketTS's channel listing does.
     val onlineUsers = remember(state.tree) {
@@ -234,6 +238,8 @@ fun GatewayDashboard(
     if (showAudio) {
         AudioRepairPopup(
             muted = state.outputMuted,
+            incomingVoiceActive = incomingVoiceActive,
+            currentChannel = state.ownChannelName,
             mediaSpeaker = !state.voice.callAudio && !state.voice.useHeadset,
             pocketTsMode = state.voice.echoCancellation && state.voice.useHeadset && !state.voice.earpiece,
             onToggleMute = actions::toggleSound,
@@ -393,6 +399,8 @@ private fun OnlineUsersPopup(users: List<ServerModel.Client>, onClose: () -> Uni
 @Composable
 private fun AudioRepairPopup(
     muted: Boolean,
+    incomingVoiceActive: Boolean,
+    currentChannel: String,
     mediaSpeaker: Boolean,
     pocketTsMode: Boolean,
     onToggleMute: () -> Unit,
@@ -412,6 +420,18 @@ private fun AudioRepairPopup(
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    if (incomingVoiceActive) "RX: TeamSpeak-spraak wordt ontvangen"
+                    else "RX: momenteel geen inkomende spraak gedetecteerd",
+                    color = if (incomingVoiceActive) StandbyGreen else Color(0xFFB1C8D9),
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 13.sp,
+                )
+                Text(
+                    "Huidig TeamSpeak-kanaal: ${currentChannel.ifBlank { "Onbekend" }}",
+                    color = Color(0xFFB1C8D9),
+                    fontSize = 12.sp,
+                )
                 Text(
                     if (muted) "Geluid staat UIT (gedempt)."
                     else "Geluid staat AAN.",
