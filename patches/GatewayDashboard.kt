@@ -64,7 +64,7 @@ import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.delay
 
 /*
- * DMR Gateway Pro - independently branded Android presentation.
+ * DG Gateway Pro - independently branded Android presentation.
  * 2026-11-16. PocketTS audio, protocol, PTT and session handling remain intact.
  * GPL-3.0-or-later; original PocketTS copyright notices remain in the source.
  */
@@ -235,20 +235,30 @@ fun GatewayDashboard(
         AudioRepairPopup(
             muted = state.outputMuted,
             mediaSpeaker = !state.voice.callAudio && !state.voice.useHeadset,
+            pocketTsMode = state.voice.echoCancellation && state.voice.useHeadset && !state.voice.earpiece,
             onToggleMute = actions::toggleSound,
             onTestSound = { TestSound.play(state.voice) },
-            onRepair = {
-                // Safe, explicit one-tap playback fallback for Samsung/Android call-audio routing bugs.
-                // PocketTS still owns the actual TeamSpeak receive and transmit pipelines.
-                val repaired = state.voice.copy(
+            onPocketTs = {
+                // PocketTS v1.7.0 defaults; recover persisted audio settings from 2.0.1
+                // without changing activation, mic level, noise suppression or PTT.
+                Session.updateVoice(state.voice.copy(
+                    echoCancellation = true,
+                    earpiece = false,
+                    useHeadset = true,
+                    speakerRefusedAt = 0,
+                    voiceVolumeDb = 0,
+                ))
+                if (state.outputMuted) actions.toggleSound()
+            },
+            onSpeaker = {
+                // Only a manual alternative if the exact PocketTS route fails on this phone.
+                Session.updateVoice(state.voice.copy(
                     earpiece = false,
                     echoCancellation = false,
                     useHeadset = false,
-                    voiceVolumeDb = maxOf(state.voice.voiceVolumeDb, 0),
-                )
-                Session.updateVoice(repaired)
+                    voiceVolumeDb = 0,
+                ))
                 if (state.outputMuted) actions.toggleSound()
-                TestSound.play(repaired)
             },
             onClose = { showAudio = false },
         )
@@ -384,9 +394,11 @@ private fun OnlineUsersPopup(users: List<ServerModel.Client>, onClose: () -> Uni
 private fun AudioRepairPopup(
     muted: Boolean,
     mediaSpeaker: Boolean,
+    pocketTsMode: Boolean,
     onToggleMute: () -> Unit,
     onTestSound: () -> Unit,
-    onRepair: () -> Unit,
+    onPocketTs: () -> Unit,
+    onSpeaker: () -> Unit,
     onClose: () -> Unit,
 ) {
     AlertDialog(
@@ -407,8 +419,11 @@ private fun AudioRepairPopup(
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    if (mediaSpeaker) "Audio via telefoonluidspreker (media)."
-                    else "Audio gebruikt de belgeluidroute of headset. Hoor je niets? Kies Audio herstellen.",
+                    when {
+                        pocketTsMode -> "Audio via de originele PocketTS-gespreksroute (luidspreker of headset)."
+                        mediaSpeaker -> "Audio via mediageluid op de telefoonluidspreker."
+                        else -> "Er is een aangepaste audio-uitgang actief."
+                    },
                     color = LightText,
                     fontSize = 13.sp,
                 )
@@ -427,20 +442,27 @@ private fun AudioRepairPopup(
                     Text("Testgeluid afspelen")
                 }
                 Button(
-                    onClick = onRepair,
+                    onClick = onPocketTs,
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF08763C)),
                 ) {
                     Icon(Icons.Filled.VolumeUp, contentDescription = null)
                     Spacer(Modifier.width(7.dp))
-                    Text("Audio herstellen")
+                    Text("Origineel PocketTS geluid")
+                }
+                Button(
+                    onClick = onSpeaker,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF154A73)),
+                ) {
+                    Text("Alternatief: telefoonluidspreker")
                 }
                 Text(
-                    "Herstellen kiest de telefoonluidspreker, zet de belgeluidroute uit en maakt het geluid hoorbaar via mediavolume. Deze keuze blijft bewaard.",
+                    "PocketTS herstelt de oorspronkelijke audio-instellingen. Dit is de aanbevolen keuze als PocketTS op dit toestel goed werkte. Test daarna het geluid opnieuw.",
                     color = Color(0xFFB1C8D9), fontSize = 12.sp,
                 )
                 Text(
-                    "Controleer ook of je in hetzelfde TeamSpeak-kanaal zit als degene die praat. Zet je mediavolume hoger.",
+                    "Zorg dat beide gebruikers in hetzelfde TeamSpeak-kanaal zitten. Probeer bij PocketTS-geluid ook het gespreksvolume hoger te zetten; bij luidsprekerstand het mediavolume.",
                     color = Color(0xFFB1C8D9), fontSize = 12.sp,
                 )
             }
