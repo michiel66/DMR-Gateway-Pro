@@ -1,50 +1,73 @@
-# DMR Gateway Pro
+# DG Gateway Pro — Android
 
-**Eigen Android TeamSpeak-client met blauw-oranje radiopaneel en grote Push-to-Talk-knop.**
+**Digitale Gateway Regio Netwerk Nederland**: een zelfstandige Android-portofoonapp op basis van [PocketTS 1.7.0](https://github.com/KorppuJauho/pocketts/releases/tag/v1.7.0), met een eigen eenvoudige provincie-login en vaste TeamSpeak-verbinding.
 
-Dit project is een gewijzigde versie van [PocketTS 1.7.0](https://github.com/KorppuJauho/pocketts/releases/tag/v1.7.0) van KorppuJauho, onder de **GNU GPL v3**. De naam, app-ID, iconen, kleuren en verbonden-interface zijn aangepast op 16 november 2026. Het oorspronkelijke audio- en TeamSpeak-protocol blijven ongewijzigd.
+> Dit is een **onafhankelijk TeamSpeak-project**. DG-groepen zijn eigen regiogroepen, geen officiële DMR-talkgroups en geen koppeling met het BrandMeister-netwerk. DG staat voor *Digitale Gateway*.
 
-> DMR Gateway Pro is de **appnaam**; de huidige app maakt via TeamSpeak verbinding. Dit voegt niet automatisch een DMR-naar-TeamSpeak-radio-gateway toe. De app is niet verbonden aan de makers van TeamSpeak.
+## Versie 2.0.0 — Android
 
-## Wat zit er in versie 1.1.0?
+- **Appnaam:** DG Gateway Pro; eigen Android-ID: `nl.dg.gateway.pro`. De eerdere DMR Gateway Pro-testapp heeft een ander app-ID en kan naast de nieuwe app blijven staan.
+- **Eenvoudig verbinden:** voer je eigen naam in en kies je provincie. Bij verbinding krijg je bijvoorbeeld de TeamSpeak-naam `DG-103 Michiel`.
+- **Vaste server:** de app maakt altijd verbinding met `heerlen.mijnts3.nl`. Gebruikers hoeven geen IP-adres, poort of eigen server in te vullen. Andere serverfavorieten en inkomende TeamSpeak-serverlinks worden in de gewone appflow niet aangeboden.
+- **Naam en provincie worden onthouden:** op dit Android-apparaat via de lokale appinstellingen. Na loskoppelen kun je naam/provincie aanpassen.
+- **Portofoondashboard:** oorspronkelijke PocketTS TeamSpeak-protocolengine, audio en echte PTT blijven intact; grote groene PTT wordt rood tijdens zenden; zilverkleurige omlijsting; chat en online gebruikerspopup.
+- **Geen automatische wissel van TS-spraakkanaal op basis van DG:** de DG-prefix is een **regiolabel**. Gebruikers kunnen een bestaand TeamSpeak-kanaal kiezen zoals op de originele server. Het dashboard kan later op DG-prefix groeperen.
 
-- **Nieuw uiterlijk:** donkerblauw, elektrische blauwe omlijning, oranje Kanalen-tab en contrastvolle gebruikerslijst.
-- **Zeer grote PTT-knop**, onderaan in het midden, met echte TeamSpeak-zendfunctie: indrukken = zenden, loslaten = stoppen. Groen tijdens standby, rood tijdens zenden, met een dubbele zilverkleurige metalen ring.
-- **Zilvermetalen randen** rond het volledige kanalen-/chatscherm, geïnspireerd op het aangeleverde ontwerp.
-- **Gebruikersknop:** popup met uitsluitend de namen van alle online TeamSpeak-gebruikers uit alle kanalen, automatisch bijgewerkt.
-- **PTT standaard ingeschakeld** bij een nieuwe installatie. De gebruiker kan spraakactivatie altijd aanpassen via Instellingen.
-- Alle serverkanalen, gebruikers, chat, favorieten, gebruikersopties en server-instellingen worden uit de originele PocketTS-broncode geladen.
-- Microfoon, geluid, audioverwerking, verbindingsdienst en protocolmodule blijven uit de geteste upstreambron.
-- **Eigen Android-app-ID:** \`nl.dmr.gateway.pro\`. Daardoor kan de app naast de originele PocketTS geïnstalleerd worden.
-- Nieuw launchericoon, appnaam **DMR Gateway Pro**, en Nederlandse dashboardknoppen.
-- Reagerende lay-out voor kleine telefoons en grote schermen.
+### Nederlandse DG-regio's
 
-## APK downloaden
+| DG-groep | Provincie |
+|---|---|
+| DG-100 | Noord-Holland |
+| DG-101 | Utrecht |
+| DG-102 | Zeeland |
+| DG-103 | Zuid-Holland |
+| DG-104 | Noord-Brabant |
+| DG-105 | Limburg |
+| DG-106 | Gelderland |
+| DG-107 | Overijssel |
+| DG-108 | Drenthe |
+| DG-109 | Groningen |
+| DG-110 | Friesland |
+| DG-111 | Flevoland |
+| DG-999 | Overige, voor het latere dashboard bij gebruikers zonder herkenbare DG-prefix |
 
-Ga naar de GitHub-repository, open **Actions → Android APK → meest recente geslaagde run → Artifacts** en download **DMR-Gateway-Pro-debug-apk**. Pak het ZIP-bestand uit; daarin staat **DMR-Gateway-Pro-1.1.0-debug.apk**.
+Een gewone TeamSpeak-gebruiker die zichzelf `DG-103 Marcel` noemt, kan later door het Windows-dashboard in DG-103 worden ingedeeld. De Android-app verandert geen officiële TeamSpeak-kanalen of rechten.
 
-Bij een eerste installatie kan Android vragen om toestemming voor installeren vanuit de browser of bestandsbeheerder. Gebruik minimaal Android 10.
+## APK downloaden en installeren
 
-**Let op:** dit is aanvankelijk een debug-build voor tests. De GitHub-run tekent hem met een tijdelijke debug-sleutel. Voor vaste updates zonder herinstallatie moet er een eigen, veilig opgeslagen release-sleutel worden geconfigureerd.
+Open [de Actions-pagina](https://github.com/michiel66/DMR-Gateway-Pro/actions) van deze Android-repository. Kies de nieuwste geslaagde **Android APK** build; onder **Artifacts** staat `DG-Gateway-Pro-debug-apk`. Download het ZIP-bestand en pak `DG-Gateway-Pro-2.0.0-debug.apk` uit. Voor installatie is minimaal Android 10 nodig.
 
-## Hoe is de code opgebouwd?
+De APK is een **debug-build**. Iedere GitHub Actions-run ondertekent met een tijdelijke testsleutel. Voor toekomstige upgrades zonder herinstallatie is een vaste release-signingsleutel nodig. Het Android-app-ID is gewijzigd van `nl.dmr.gateway.pro` naar `nl.dg.gateway.pro`; daarom vervangt deze app de vorige DMR-testversie niet automatisch.
 
-De repository bevat de aanpassingen. De GitHub Actions-workflow haalt een schone, vaste versie van PocketTS op, voert de merk- en UI-wijzigingen uit en bouwt met de Android-omgeving van PocketTS.
+## Gebruik
 
-- \`patches/GatewayDashboard.kt\`: echte, interactieve Android Jetpack Compose-interface.
-- \`scripts/apply_branding.py\`: gecontroleerde patches op de officiële v1.7.0-code; stopt als de verwachte broncode niet overeenkomt.
-- \`.github/workflows/android.yml\`: reproduceerbare APK-build + volledig gewijzigde broncode als downloadbaar bronpakket.
+1. Open **DG Gateway Pro** op de telefoon.
+2. Vul je **naam** in, bijvoorbeeld Michiel.
+3. Kies de **provincie** Zuid-Holland. De app toont **DG-103 Michiel**.
+4. Tik op **VERBINDEN** en sta zo nodig de microfoontoestemming toe.
+5. De app verbindt met de vooraf ingestelde TeamSpeak-server. Na verbinding krijg je het bestaande radiopaneel.
+6. Houd de groene **PTT** ingedrukt om te praten (rood tijdens zenden); laat los om te stoppen. De microfoon en PTT werken alleen als Android, de server en de kanaalrechten dat toelaten.
+7. Tik op **Gebruikers** voor een popup met alle online TeamSpeak-namen; tik op een kanaal om er naartoe te gaan.
+8. Kies **Verbinding verbreken** om opnieuw naar het aanmeldscherm te gaan, waar naam en provincie onthouden blijven.
 
-De workflow compileert **de originele PocketTS-audio-engine**, niet een nagemaakte of geïmiteerde audioverbinding. De server wordt door de gebruiker gekozen; er is geen TeamSpeak-server vooraf ingebouwd.
+## Windows-dashboard: apart toekomstig project
 
-### Broncode, auteursrechten en licentie
+De later geplande **DG Gateway Pro Windows Viewer** komt in een **eigen GitHub-repository** en is niet opgenomen in deze Android-build. Het ontwerp omvat een fullscreen Nederlandkaart, DG-regiogroepen, groen oplichtende regio wanneer een gebruiker spreekt, Last Heard, en twee modi:
 
-[Originele PocketTS-repository](https://github.com/KorppuJauho/pocketts) — auteursrechten bij de oorspronkelijke rechthebbenden. De oorspronkelijke LICENSE, auteursvermeldingen, CREDITS en overige licentiegegevens blijven aanwezig in het volledige, gewijzigde bronpakket dat de build produceert.
+- **Met Android:** een tijdelijke QR-code of zescijferig koppelnummer dat bij iedere Windows-start vernieuwd wordt.
+- **Zonder Android:** de pc maakt zelf verbinding met TeamSpeak als `DashboardView/gebruikersnaam` en kiest een TeamSpeak-kanaal om spreekstatus te volgen, zonder microfoon of luisteraudio.
 
-Deze wijzigingen en de resulterende app vallen onder **GPL-3.0**, zoals PocketTS. Gebruikers krijgen toegang tot de volledige corresponderende broncode via het bronpakket van iedere build, de vastgepinde originele broncode en de patches in deze repository. Bij verspreiding moet die toegang behouden blijven.
+De Windows-functionaliteit en de PC-koppeling zijn **nog niet geïmplementeerd**. Voor netwerkbrede spreekstatus over alle kanalen kan later een aparte servermonitor nodig zijn.
 
-## Technische controle
+## Broncode, rechten en licentie
 
-Deze eerste versie is opgezet om te bouwen en daarna op een echte Samsung-telefoon te testen. Controleer in het bijzonder: verbinding met TS3, RX, TX, PTT-loslaten, scherm draaien, kanaalwissel, slaapstand, en audiotoestemming.
+Het project is gebaseerd op PocketTS van KorppuJauho, met behoud van de originele audiocode en TeamSpeak-protocolcomponenten. De gewijzigde code valt onder **GPL-3.0**. De build haalt upstream broncode van de vaste tag `v1.7.0`, voert `scripts/apply_branding.py` uit en levert de volledige aangepaste broncode als `DG-Gateway-Pro-source` artifact.
 
-Dit is een onafhankelijk nieuw project en vervangt **niet** TG 103 VOORBURG of TS Heerlen.
+Bestanden:
+- `patches/GatewayDashboard.kt` — interactieve Android-UI en PTT-knop
+- `patches/DgRegions.kt` — DG-provincie-indeling en nickname-regels
+- `patches/DgConnectScreen.kt` — naam/provincie invoeren en lokaal onthouden
+- `scripts/apply_branding.py` — bouwt vaste serverflow en merknaam in een schone PocketTS v1.7.0 checkout
+- `.github/workflows/android.yml` — bouwt de APK en volledige corresponderende broncode
+
+Het project is onafhankelijk van TeamSpeak en is niet gekoppeld aan de officiële DMR- of BrandMeister-netwerken.
