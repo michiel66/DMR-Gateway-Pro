@@ -4,15 +4,15 @@
 
 > Dit is een **onafhankelijk TeamSpeak-project**. DG-groepen zijn eigen regiogroepen, geen officiële DMR-talkgroups en geen koppeling met het BrandMeister-netwerk. DG staat voor *Digitale Gateway*.
 
-## Versie 2.0.1 — Android
+## Versie 2.0.2 — Android
 
 - **Appnaam:** DG Gateway Pro; eigen Android-ID: `nl.dg.gateway.pro`. De eerdere DMR Gateway Pro-testapp heeft een ander app-ID en kan naast de nieuwe app blijven staan.
 - **Eenvoudig verbinden:** voer je eigen naam in en kies je provincie. Bij verbinding krijg je bijvoorbeeld de TeamSpeak-naam `DG-103 Michiel`.
 - **Vaste server:** de app maakt altijd verbinding met `heerlen.mijnts3.nl`. Gebruikers hoeven geen IP-adres, poort of eigen server in te vullen. Andere serverfavorieten en inkomende TeamSpeak-serverlinks worden in de gewone appflow niet aangeboden.
 - **Naam en provincie worden onthouden:** op dit Android-apparaat via de lokale appinstellingen. Na loskoppelen kun je naam/provincie aanpassen.
 - **Portofoondashboard:** oorspronkelijke PocketTS TeamSpeak-protocolengine, audio en echte PTT blijven intact; grote groene PTT wordt rood tijdens zenden; zilverkleurige omlijsting; chat en online gebruikerspopup.
-- **Herstel RX-geluid:** de Audioknop opent een popup met Geluid aan/uit, Testgeluid en **Audio herstellen**. De herstelknop kiest mediageluid via de ingebouwde luidspreker, ook als bestaande instellingen nog de belgeluidroute gebruiken. Dit kan ontvangstproblemen op sommige Samsung-telefoons verhelpen.
-- **Nieuwe installaties:** ontvangen via Android-mediageluid en ingebouwde speaker als standaard, in plaats van belgeluidroute. Mediaplayback voorkomt dat ontvangst onbedoeld door de stille oorspeaker loopt.
+- **Herstel RX-geluid:** de Audioknop opent een popup met **Origineel PocketTS geluid**, **Alternatief: telefoonluidspreker** en **Testgeluid afspelen**. De aanbevolen knop zet ook eerder opgeslagen audio-instellingen terug naar de originele PocketTS-route zonder de PTT-instelling of het microfoonniveau te veranderen.
+- **Nieuwe installaties:** exact dezelfde standaardwaarden voor de ontvangen spraak als PocketTS 1.7.0: echo-onderdrukking aan, headsetgebruik aan, earpiece uit. De originele `Session.kt`, `VoicePlayer.kt`, `AudioRoute.kt` en `TestSound.kt` worden met een GitHub Actions-regressiecheck op wijzigingen gecontroleerd.
 - **Geen automatische wissel van TS-spraakkanaal op basis van DG:** de DG-prefix is een **regiolabel**. Gebruikers kunnen een bestaand TeamSpeak-kanaal kiezen zoals op de originele server. Het dashboard kan later op DG-prefix groeperen.
 
 ### Nederlandse DG-regio's
@@ -37,7 +37,7 @@ Een gewone TeamSpeak-gebruiker die zichzelf `DG-103 Marcel` noemt, kan later doo
 
 ## APK downloaden en installeren
 
-Open [de Actions-pagina](https://github.com/michiel66/DMR-Gateway-Pro/actions) van deze Android-repository. Kies de nieuwste geslaagde **Android APK** build; onder **Artifacts** staat `DG-Gateway-Pro-debug-apk`. Download het ZIP-bestand en pak `DG-Gateway-Pro-2.0.1-debug.apk` uit. Voor installatie is minimaal Android 10 nodig.
+Open [de Actions-pagina](https://github.com/michiel66/DMR-Gateway-Pro/actions) van deze Android-repository. Kies de nieuwste geslaagde **Android APK** build; onder **Artifacts** staat `DG-Gateway-Pro-debug-apk`. Download het ZIP-bestand en pak `DG-Gateway-Pro-2.0.2-debug.apk` uit. Voor installatie is minimaal Android 10 nodig.
 
 De APK is een **debug-build**. Iedere GitHub Actions-run ondertekent met een tijdelijke testsleutel. Voor toekomstige upgrades zonder herinstallatie is een vaste release-signingsleutel nodig. Het Android-app-ID is gewijzigd van `nl.dmr.gateway.pro` naar `nl.dg.gateway.pro`; daarom vervangt deze app de vorige DMR-testversie niet automatisch.
 
@@ -49,7 +49,7 @@ De APK is een **debug-build**. Iedere GitHub Actions-run ondertekent met een tij
 4. Tik op **VERBINDEN** en sta zo nodig de microfoontoestemming toe.
 5. De app verbindt met de vooraf ingestelde TeamSpeak-server. Na verbinding krijg je het bestaande radiopaneel.
 6. Houd de groene **PTT** ingedrukt om te praten (rood tijdens zenden); laat los om te stoppen. De microfoon en PTT werken alleen als Android, de server en de kanaalrechten dat toelaten.
-7. Hoor je niets terug? Tik op **Audio** → **Audio herstellen**. Kies vervolgens **Testgeluid afspelen**. Controleer Android-mediavolume, Bluetooth en of je in hetzelfde TeamSpeak-kanaal zit als de spreker.
+7. Hoor je niets terug? Tik op **Audio** → **Origineel PocketTS geluid**. Kies daarna **Testgeluid afspelen**. Werkt de originele route niet, probeer **Alternatief: telefoonluidspreker**. Controleer Android-mediavolume, Bluetooth en of je in hetzelfde TeamSpeak-kanaal zit als de spreker.
 8. Tik op **Gebruikers** voor een popup met alle online TeamSpeak-namen; tik op een kanaal om er naartoe te gaan.
 9. Kies **Verbinding verbreken** om opnieuw naar het aanmeldscherm te gaan, waar naam en provincie onthouden blijven.
 
