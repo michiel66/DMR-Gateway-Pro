@@ -32,6 +32,8 @@ import androidx.compose.material.icons.filled.ScreenShare
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
@@ -54,6 +56,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.korppujauho.pocketts.Session
+import io.github.korppujauho.pocketts.TestSound
 import io.github.korppujauho.pocketts.VoiceSettings
 import io.github.korppujauho.pocketts.proto.ServerModel
 import java.time.LocalTime
@@ -104,6 +107,7 @@ fun GatewayDashboard(
     val pttMode = state.voice.activation == VoiceSettings.Activation.PTT
     val keyboardOpen = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     var showUsers by remember { mutableStateOf(false) }
+    var showAudio by remember { mutableStateOf(false) }
     // Every visible connected client across the server's entire channel tree.
     // Exclude server-query identities just like PocketTS's channel listing does.
     val onlineUsers = remember(state.tree) {
@@ -142,7 +146,7 @@ fun GatewayDashboard(
                 )
                 GatewayQuickButton(
                     if (state.outputMuted) Icons.Filled.VolumeOff else Icons.Filled.VolumeUp,
-                    "Geluid", alert = state.outputMuted, onClick = actions::toggleSound,
+                    "Geluid", alert = state.outputMuted, onClick = { showAudio = true },
                 )
                 GatewayQuickButton(Icons.Filled.ScreenShare, "Scherm delen", onClick = onShare)
                 GatewayQuickButton(Icons.Filled.People, "Gebruikers", onClick = { showUsers = true })
@@ -218,7 +222,7 @@ fun GatewayDashboard(
                     GatewaySideButton(
                         if (state.outputMuted) Icons.Filled.VolumeOff else Icons.Filled.VolumeUp,
                         "Audio", Modifier.weight(1f),
-                    ) { actions.toggleSound() }
+                    ) { showAudio = true }
                 }
                 GatewayStatusBar(connected, state.pttHeld, pttMode, Modifier.fillMaxWidth().height(38.dp))
             }
@@ -226,6 +230,28 @@ fun GatewayDashboard(
     }
     if (showUsers) {
         OnlineUsersPopup(onlineUsers, onClose = { showUsers = false })
+    }
+    if (showAudio) {
+        AudioRepairPopup(
+            muted = state.outputMuted,
+            mediaSpeaker = !state.voice.callAudio && !state.voice.useHeadset,
+            onToggleMute = actions::toggleSound,
+            onTestSound = { TestSound.play(state.voice) },
+            onRepair = {
+                // Safe, explicit one-tap playback fallback for Samsung/Android call-audio routing bugs.
+                // PocketTS still owns the actual TeamSpeak receive and transmit pipelines.
+                val repaired = state.voice.copy(
+                    earpiece = false,
+                    echoCancellation = false,
+                    useHeadset = false,
+                    voiceVolumeDb = maxOf(state.voice.voiceVolumeDb, 0),
+                )
+                Session.updateVoice(repaired)
+                if (state.outputMuted) actions.toggleSound()
+                TestSound.play(repaired)
+            },
+            onClose = { showAudio = false },
+        )
     }
 }
 
@@ -350,6 +376,80 @@ private fun OnlineUsersPopup(users: List<ServerModel.Client>, onClose: () -> Uni
         },
         containerColor = Color(0xFF07182C),
         shape = RoundedCornerShape(19.dp),
+    )
+}
+
+/** Audio output diagnostics: never silently toggle the speaker when opening this popup. */
+@Composable
+private fun AudioRepairPopup(
+    muted: Boolean,
+    mediaSpeaker: Boolean,
+    onToggleMute: () -> Unit,
+    onTestSound: () -> Unit,
+    onRepair: () -> Unit,
+    onClose: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onClose,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.VolumeUp, contentDescription = null, tint = CyanGlow)
+                Spacer(Modifier.width(9.dp))
+                Text("Ontvangstgeluid", color = LightText, fontWeight = FontWeight.Bold)
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    if (muted) "Geluid staat UIT (gedempt)."
+                    else "Geluid staat AAN.",
+                    color = if (muted) AmberGlow else StandbyGreen,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    if (mediaSpeaker) "Audio via telefoonluidspreker (media)."
+                    else "Audio gebruikt de belgeluidroute of headset. Hoor je niets? Kies Audio herstellen.",
+                    color = LightText,
+                    fontSize = 13.sp,
+                )
+                Button(
+                    onClick = onToggleMute,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF154A73)),
+                ) {
+                    Text(if (muted) "Geluid aanzetten" else "Geluid dempen")
+                }
+                Button(
+                    onClick = onTestSound,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF154A73)),
+                ) {
+                    Text("Testgeluid afspelen")
+                }
+                Button(
+                    onClick = onRepair,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF08763C)),
+                ) {
+                    Icon(Icons.Filled.VolumeUp, contentDescription = null)
+                    Spacer(Modifier.width(7.dp))
+                    Text("Audio herstellen")
+                }
+                Text(
+                    "Herstellen kiest de telefoonluidspreker, zet de belgeluidroute uit en maakt het geluid hoorbaar via mediavolume. Deze keuze blijft bewaard.",
+                    color = Color(0xFFB1C8D9), fontSize = 12.sp,
+                )
+                Text(
+                    "Controleer ook of je in hetzelfde TeamSpeak-kanaal zit als degene die praat. Zet je mediavolume hoger.",
+                    color = Color(0xFFB1C8D9), fontSize = 12.sp,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onClose) { Text("Sluiten", color = LightText) }
+        },
+        containerColor = DeepPanel,
+        shape = RoundedCornerShape(18.dp),
     )
 }
 
