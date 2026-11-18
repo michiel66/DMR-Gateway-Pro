@@ -220,7 +220,14 @@ fun GatewayDashboard(
                         size = buttonSize,
                         held = state.pttHeld,
                         enabled = connected && pttMode,
-                        onHold = actions::setPtt,
+                        onHold = { held ->
+                            when {
+                                // Original PocketTS only requests RECORD_AUDIO through the mic control.
+                                // A PTT press must also offer the Android permission dialog.
+                                held && !state.micAllowed -> actions.toggleMic()
+                                else -> actions.setPtt(held)
+                            }
+                        },
                     )
                     Spacer(Modifier.width(8.dp))
                     GatewaySideButton(
@@ -228,7 +235,7 @@ fun GatewayDashboard(
                         "Audio", Modifier.weight(1f),
                     ) { showAudio = true }
                 }
-                GatewayStatusBar(connected, state.pttHeld, pttMode, Modifier.fillMaxWidth().height(38.dp))
+                GatewayStatusBar(connected, state.pttHeld, pttMode, state.micAllowed, state.inputMuted, Modifier.fillMaxWidth().height(38.dp))
             }
         }
     }
@@ -496,7 +503,7 @@ private fun AudioRepairPopup(
 }
 
 @Composable
-private fun GatewayStatusBar(connected: Boolean, held: Boolean, pttMode: Boolean, modifier: Modifier = Modifier) {
+private fun GatewayStatusBar(connected: Boolean, held: Boolean, pttMode: Boolean, micAllowed: Boolean, micMuted: Boolean, modifier: Modifier = Modifier) {
     val fmt = remember { DateTimeFormatter.ofPattern("HH:mm:ss") }
     var clock by remember { mutableStateOf(LocalTime.now().format(fmt)) }
     LaunchedEffect(Unit) {
@@ -514,12 +521,14 @@ private fun GatewayStatusBar(connected: Boolean, held: Boolean, pttMode: Boolean
     ) {
         Text(
             when {
+                !micAllowed && connected -> "● MIC TOESTAAN"
+                micMuted && connected -> "● MICROFOON UIT"
                 held -> "● ZENDEN"
                 connected && pttMode -> "● Verbonden · PTT"
                 connected -> "● Verbonden · VOX"
                 else -> "○ Verbinden…"
             },
-            color = if (connected) Color(0xFF35FF72) else AmberGlow,
+            color = if (connected && micAllowed && !micMuted) Color(0xFF35FF72) else AmberGlow,
             fontWeight = FontWeight.SemiBold, fontSize = 12.sp,
             maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
         )
